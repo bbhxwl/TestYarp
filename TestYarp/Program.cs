@@ -26,8 +26,9 @@ var httpClient = new HttpMessageInvoker(new SocketsHttpHandler()
 {
     UseProxy = false,
     AllowAutoRedirect = false,
-    AutomaticDecompression = DecompressionMethods.None,
-    UseCookies = false
+    AutomaticDecompression = DecompressionMethods.All,
+    UseCookies = false,
+    
 });
 
 CustomTransformer c = new CustomTransformer();
@@ -37,7 +38,7 @@ var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.Fro
 app.Map("/vue/{**catch-all}", async (HttpContext httpContext, IHttpForwarder forwarder) =>
 {
 
-    var error = await forwarder.SendAsync(httpContext,"https://cn.vuejs.org/", httpClient, requestOptions,
+    var error = await forwarder.SendAsync(httpContext, "https://cn.vuejs.org/", httpClient, requestOptions,
      c);
 
     if (error != ForwarderError.None)
@@ -66,17 +67,18 @@ public class CustomTransformer : HttpTransformer
     public override async ValueTask<bool> TransformResponseAsync(HttpContext httpContext, HttpResponseMessage? proxyResponse)
     {
 
-        if (proxyResponse==null)
+        if (proxyResponse == null)
         {
             return false;
         }
-        string body=await proxyResponse.Content.ReadAsStringAsync();
-        body= body.Replace("<title>Vue.js</title>", "<title>bbhxwl</title>");
+        string body = await proxyResponse.Content.ReadAsStringAsync();
+        body = body.Replace("<title>Vue.js</title>", "<title>bbhxwl</title>");
         var content = new StringContent(body, Encoding.UTF8, "text/html");
         httpContext.Response.ContentLength = body.Length;
         proxyResponse.Content?.Dispose();
         proxyResponse.Content = content;
         return await base.TransformResponseAsync(httpContext, proxyResponse);
     }
+  
 
 }
